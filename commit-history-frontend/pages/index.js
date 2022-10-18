@@ -1,3 +1,5 @@
+import CommitsTimeline from "../components/CommitsTimeline";
+
 export default function Home() {
-  return <div>Home</div>;
+  return <CommitsTimeline />;
 }
