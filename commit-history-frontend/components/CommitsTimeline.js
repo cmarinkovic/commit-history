@@ -1,6 +1,8 @@
 import { Timeline, Card } from "flowbite-react";
 import { CalendarIcon } from "@heroicons/react/24/solid";
 
+import DetailsAccordion from "./DetailsAccordion";
+
 export default function CommitsTimeline() {
   return (
     <div className="max-w-screen-md min-w-min mx-auto">
@@ -20,7 +22,7 @@ export default function CommitsTimeline() {
                   <p className="font-normal text-base">Author</p>
                 </Timeline.Title>
                 <Timeline.Body>Commit description.</Timeline.Body>
-                (Details)
+                <DetailsAccordion />
               </Timeline.Content>
             </Timeline.Item>
           </Timeline>
