@@ -9,32 +9,78 @@ import MissingParamsAlert from "./MissingParamsAlert";
 import ErrorAlert from "./ErrorAlert";
 import Skeleton from "./Skeleton";
 
+// TODO: Divide component to improve maintainability.
 export default function CommitsTimeline() {
-  const [data, setData] = useState();
+  const [commitsData, setCommitsData] = useState();
+  const [owner, setOwner] = useState();
   const [errorMessage, setErrorMessage] = useState();
+  const [personalToken, setPersonalToken] = useState("");
   const [repositoryName, setRepositoryName] = useState("");
-  const [repositoryOwner, setRepositoryOwner] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const missingParams = useMemo(() => {
     const missingParams = [];
 
+    if (personalToken.length === 0) missingParams.push("Personal Access Token");
     if (repositoryName.length === 0) missingParams.push("repository");
-    if (repositoryOwner.length === 0) missingParams.push("owner");
 
     return missingParams;
-  }, [repositoryName, repositoryOwner]);
+  }, [personalToken, repositoryName]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (missingParams.length > 0) return;
 
+    setCommitsData(null);
+    authenticate(postRepository(getCommits));
+  };
+
+  const authenticate = (callback) => {
     setErrorMessage("");
     setIsLoading(true);
-    axios
+    return axios
+      .post(process.env.BASE_URL + "/commits/auth", {
+        personalToken: personalToken,
+      })
+      .then((response) => {
+        if (response.data.owner) {
+          setOwner(response.data.owner);
+        }
+        callback();
+      })
+      .catch((error) => {
+        if (error.response) {
+          setErrorMessage(error.response.data.message);
+        }
+      })
+      .finally(() => setIsLoading(false));
+  };
+
+  const postRepository = (callback) => {
+    setErrorMessage("");
+    setIsLoading(true);
+    return axios
+      .post(process.env.BASE_URL + "/commits/repository", {
+        repository: repositoryName,
+      })
+      .then((response) => {
+        callback();
+      })
+      .catch((error) => {
+        if (error.response) {
+          setErrorMessage(error.response.data.message);
+        }
+      })
+      .finally(() => setIsLoading(false));
+  };
+
+  const getCommits = () => {
+    setErrorMessage("");
+    setIsLoading(true);
+    return axios
       .get(process.env.BASE_URL + "/commits")
       .then((response) => {
-        setData(response.data);
+        setCommitsData(response.data);
       })
       .catch((error) => {
         if (error.response) {
@@ -49,35 +95,44 @@ export default function CommitsTimeline() {
       <div className="mx-8">
         <Card>
           <h5 className="text-2xl tracking-tight text-gray-900 dark:text-white">
-            <form className="grid grid-cols-12 gap-x-2">
-              <span className="col-span-3">
-                <TextInput
-                  value={repositoryName}
-                  className="font-medium"
-                  placeholder="Repository name"
-                  onChange={(e) => setRepositoryName(e.target.value)}
-                ></TextInput>
-              </span>
-              <span className="text-md place-self-center">by</span>
-              <span className="col-span-3">
-                <TextInput
-                  value={repositoryOwner}
-                  className="font-medium"
-                  placeholder="Repository owner"
-                  onChange={(e) => setRepositoryOwner(e.target.value)}
-                ></TextInput>
-              </span>
-              <Button
-                type="submit"
-                disabled={missingParams.length > 0}
-                onClick={handleSubmit}
-              >
-                {isLoading ? (
-                  <Spinner size="md" light={true} />
-                ) : (
-                  <ArrowPathIcon className="h-6 w-6" />
-                )}
-              </Button>
+            <form className="grid grid-rows-2 gap-y-2 gap-x-6 mb-4">
+              <div className="grid grid-cols-12">
+                <div className="col-span-8">
+                  <TextInput
+                    value={personalToken}
+                    className="font-medium"
+                    placeholder="Personal Access Token"
+                    onChange={(e) => setPersonalToken(e.target.value)}
+                  ></TextInput>
+                </div>
+                <div className="text-lg font-medium self-center col-span-4 mx-4">
+                  {owner && <div>{owner}</div>}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-12">
+                <div className="col-span-8">
+                  <TextInput
+                    value={repositoryName}
+                    className="font-medium"
+                    placeholder="Repository name"
+                    onChange={(e) => setRepositoryName(e.target.value)}
+                  ></TextInput>
+                </div>
+                <div className=" self-center col-span-2 mx-4">
+                  <Button
+                    type="submit"
+                    disabled={missingParams.length > 0}
+                    onClick={handleSubmit}
+                  >
+                    {isLoading ? (
+                      <Spinner size="md" light={true} />
+                    ) : (
+                      <ArrowPathIcon className="h-6 w-6" />
+                    )}
+                  </Button>
+                </div>
+              </div>
             </form>
             <MissingParamsAlert missingParams={missingParams} />
             {errorMessage && <ErrorAlert errorMessage={errorMessage} />}
@@ -85,7 +140,7 @@ export default function CommitsTimeline() {
           {isLoading ? (
             <Skeleton />
           ) : (
-            data && (
+            commitsData && (
               <Timeline>
                 <Timeline.Item>
                   <Timeline.Point icon={CalendarIcon} />
