@@ -41,4 +41,22 @@ export class CommitsService {
 
     return { owner: this.ownerData.username };
   }
+
+  getRepository(): { repository: string } {
+    const { repository } = this.ownerData;
+
+    if (!repository) return { repository: '' };
+
+    return { repository: repository };
+  }
+
+  setRepository(payload: { repository: string }): { repository: string } {
+    const { repository } = payload;
+    if (!repository || repository.length < 1)
+      throw new BadRequestException('Invalid repository.');
+
+    this.ownerData.repository = repository;
+
+    return { repository: repository };
+  }
 }
