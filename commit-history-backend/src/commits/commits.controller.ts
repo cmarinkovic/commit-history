@@ -15,4 +15,14 @@ export class CommitsController {
   authenticate(@Body() payload: { personalToken: string }) {
     return this.commitsService.authenticate(payload);
   }
+
+  @Get('repository')
+  getRepository() {
+    return this.commitsService.getRepository();
+  }
+
+  @Post('repository')
+  setRepository(@Body() payload: { repository: string }) {
+    return this.commitsService.setRepository(payload);
+  }
 }
