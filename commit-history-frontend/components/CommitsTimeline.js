@@ -1,16 +1,47 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Timeline, Card, TextInput, Button, Spinner } from "flowbite-react";
+import axios from "axios";
+
 import { CalendarIcon, ArrowPathIcon } from "@heroicons/react/24/solid";
 
 import DetailsAccordion from "./DetailsAccordion";
+import MissingParamsAlert from "./MissingParamsAlert";
+import ErrorAlert from "./ErrorAlert";
+import Skeleton from "./Skeleton";
 
 export default function CommitsTimeline() {
+  const [data, setData] = useState();
+  const [errorMessage, setErrorMessage] = useState();
   const [repositoryName, setRepositoryName] = useState("");
   const [repositoryOwner, setRepositoryOwner] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const missingParams = useMemo(() => {
+    const missingParams = [];
+
+    if (repositoryName.length === 0) missingParams.push("repository");
+    if (repositoryOwner.length === 0) missingParams.push("owner");
+
+    return missingParams;
+  }, [repositoryName, repositoryOwner]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (missingParams.length > 0) return;
+
+    setErrorMessage("");
+    setIsLoading(true);
+    axios
+      .get(process.env.BASE_URL + "/commits")
+      .then((response) => {
+        setData(response.data);
+      })
+      .catch((error) => {
+        if (error.response) {
+          setErrorMessage(error.response.data.message);
+        }
+      })
+      .finally(() => setIsLoading(false));
   };
 
   return (
@@ -36,7 +67,11 @@ export default function CommitsTimeline() {
                   onChange={(e) => setRepositoryOwner(e.target.value)}
                 ></TextInput>
               </span>
-              <Button type="submit" onClick={handleSubmit}>
+              <Button
+                type="submit"
+                disabled={missingParams.length > 0}
+                onClick={handleSubmit}
+              >
                 {isLoading ? (
                   <Spinner size="md" light={true} />
                 ) : (
@@ -44,21 +79,29 @@ export default function CommitsTimeline() {
                 )}
               </Button>
             </form>
+            <MissingParamsAlert missingParams={missingParams} />
+            {errorMessage && <ErrorAlert errorMessage={errorMessage} />}
           </h5>
-          <Timeline>
-            <Timeline.Item>
-              <Timeline.Point icon={CalendarIcon} />
-              <Timeline.Content>
-                <Timeline.Time>Date</Timeline.Time>
-                <Timeline.Title>
-                  <p className="font-medium">Commit title</p>
-                  <p className="font-normal text-base">Author</p>
-                </Timeline.Title>
-                <Timeline.Body>Commit description.</Timeline.Body>
-                <DetailsAccordion />
-              </Timeline.Content>
-            </Timeline.Item>
-          </Timeline>
+          {isLoading ? (
+            <Skeleton />
+          ) : (
+            data && (
+              <Timeline>
+                <Timeline.Item>
+                  <Timeline.Point icon={CalendarIcon} />
+                  <Timeline.Content>
+                    <Timeline.Time>Date</Timeline.Time>
+                    <Timeline.Title>
+                      <p className="font-medium">Commit title</p>
+                      <p className="font-normal text-base">Author</p>
+                    </Timeline.Title>
+                    <Timeline.Body>Commit description.</Timeline.Body>
+                    <DetailsAccordion />
+                  </Timeline.Content>
+                </Timeline.Item>
+              </Timeline>
+            )
+          )}
         </Card>
       </div>
     </div>
