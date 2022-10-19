@@ -1,7 +1,13 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Octokit } from 'octokit';
 
 import { OctokitResponse } from '@octokit/types';
+import { Commits } from 'src/interfaces/Commits';
 
 @Injectable()
 export class CommitsService {
@@ -11,6 +17,35 @@ export class CommitsService {
     username: '',
     repository: '',
   };
+
+  async findAll(): Promise<OctokitResponse<Commits[]>> {
+    const { isAuthenticated } = this.isAuthenticated();
+    const { repository } = this.ownerData;
+
+    if (!isAuthenticated) {
+      throw new UnauthorizedException('Repository owner is not authenticated.');
+    }
+
+    if (!repository) {
+      throw new BadRequestException('Repository is not specified.');
+    }
+
+    let response: OctokitResponse<any>;
+
+    try {
+      response = await this.octokit.request(
+        'GET /repos/{owner}/{repo}/commits',
+        {
+          owner: this.ownerData.username,
+          repo: this.ownerData.repository,
+        },
+      );
+    } catch (e) {
+      throw new NotFoundException('Repository not found.');
+    }
+
+    return response;
+  }
 
   isAuthenticated(): { isAuthenticated: boolean; owner: string } {
     if (!this.octokit) return { isAuthenticated: false, owner: '' };
