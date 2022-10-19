@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
-import { CommitsService } from './commits.service';
+
 import { CommitsController } from './commits.controller';
+import { CommitsService } from './commits.service';
 
 @Module({
-  providers: [CommitsService],
+  imports: [],
   controllers: [CommitsController],
+  providers: [CommitsService],
+  exports: [],
 })
 export class CommitsModule {}
