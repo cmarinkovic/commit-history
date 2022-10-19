@@ -6,6 +6,11 @@ import { CommitsService } from './commits.service';
 export class CommitsController {
   constructor(private readonly commitsService: CommitsService) {}
 
+  @Get()
+  getAll() {
+    return this.commitsService.findAll();
+  }
+
   @Get('auth')
   isAuthenticated() {
     return this.commitsService.isAuthenticated();
