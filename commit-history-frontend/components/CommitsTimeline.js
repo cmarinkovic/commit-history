@@ -140,22 +140,31 @@ export default function CommitsTimeline() {
           {isLoading ? (
             <Skeleton />
           ) : (
-            commitsData && (
-              <Timeline>
-                <Timeline.Item>
-                  <Timeline.Point icon={CalendarIcon} />
-                  <Timeline.Content>
-                    <Timeline.Time>Date</Timeline.Time>
-                    <Timeline.Title>
-                      <p className="font-medium">Commit title</p>
-                      <p className="font-normal text-base">Author</p>
-                    </Timeline.Title>
-                    <Timeline.Body>Commit description.</Timeline.Body>
-                    <DetailsAccordion />
-                  </Timeline.Content>
-                </Timeline.Item>
-              </Timeline>
-            )
+            commitsData &&
+            commitsData.data &&
+            commitsData.data.map((item) => {
+              return (
+                <Timeline key={item.sha}>
+                  <Timeline.Item>
+                    <Timeline.Point icon={CalendarIcon} />
+                    <Timeline.Content>
+                      <Timeline.Time>
+                        {new Date(item.commit.author.date).toDateString()}
+                      </Timeline.Time>
+                      <Timeline.Title>
+                        <p className="font-medium">{item.commit.message}</p>
+                        <p className="font-normal text-base">
+                          <span>{item.commit.author.name}</span>
+                          <span> {item.commit.author.email}</span>
+                        </p>
+                      </Timeline.Title>
+                      <br />
+                      <DetailsAccordion item={item} />
+                    </Timeline.Content>
+                  </Timeline.Item>
+                </Timeline>
+              );
+            })
           )}
         </Card>
       </div>
